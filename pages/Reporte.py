@@ -4,7 +4,6 @@ from utils.avatar_logic import obtener_ruta_avatar, calcular_nivel_actual
 
 st.set_page_config(page_title="Informe Mensual", page_icon="📊", layout="wide")
 
-# --- DISEÑO ---
 st.markdown("""
     <style>
         .stApp { 
@@ -22,12 +21,12 @@ st.title("📊 ARCHIVOS DE GUERRA: TU PROGRESO")
 datos = cargar_datos()
 
 if not datos:
-    st.warning("Aún no hay datos para generar el informe.")
+    st.warning("Aún no hay datos registrados en el sistema.")
 else:
-    # Obtenemos tu estado actual para proyectarlo en el informe
-    # En el futuro, aquí leeremos un histórico de fechas
-    nivel_actual = calcular_nivel_actual(3) # Asumimos 3 fallos (tu nivel actual de inicio)
+    fallos_actuales = datos.get('fallos', 3)
+    nivel_actual = calcular_nivel_actual(fallos_actuales)
     genero = datos.get('genero', 'Masculino')
+    racha_actual = datos.get('racha', 0)
     ruta_avatar = obtener_ruta_avatar(genero, nivel_actual)
 
     col1, col2 = st.columns([1, 2])
@@ -39,13 +38,13 @@ else:
 
     with col2:
         st.markdown("### Resumen de Campaña")
-        st.write("Visualiza aquí cómo tu nivel ha oscilado semanalmente.")
+        st.write("Evolución de tus métricas de disciplina en tiempo real.")
         
         c1, c2 = st.columns(2)
         with c1:
-            st.markdown('<div class="stat-box"><h3>Semanal</h3><p>Nivel 0</p></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="stat-box"><h3>Semanal</h3><p>Nivel {nivel_actual}</p></div>', unsafe_allow_html=True)
         with c2:
-            st.markdown('<div class="stat-box"><h3>Mensual</h3><p>En proceso...</p></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="stat-box"><h3>Strikes Activos</h3><p>{fallos_actuales}</p></div>', unsafe_allow_html=True)
         
         st.write("---")
-        st.metric(label="Racha Actual (Días sin fallar)", value="0", delta="0")
+        st.metric(label="Racha Actual (Días perfectos)", value=str(racha_actual), delta="+1 constante")
