@@ -1,0 +1,11 @@
+{
+    "nombre_batalla": "Prueba",
+    "genero": "Masculino",
+    "edad": 21,
+    "peso": 75.0,
+    "lesiones": "Ninguna",
+    "estado_sentimental": "Soltero/a",
+    "frecuencia_fugas": 3,
+    "fecha_registro": "2026-08-19",
+    "nivel_base_asignado": 2
+}
