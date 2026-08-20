@@ -31,7 +31,7 @@ else:
     
     with st.form("form_diagnostico"):
         st.subheader("I. Identidad del Guerrero")
-        nombre_batalla = st.text_input("Tu Nombre de Batalla / Identificador", placeholder="Ej. Ethan, Leónidas, Valquiria...")
+        nombre_batalla = st.text_input("Tu Nombre de Batalla / Identificador", placeholder="Ej. Leónidas, Valquiria...")
 
         st.markdown("---")
         st.subheader("II. Fisiología y Biomecánica")
