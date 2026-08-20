@@ -1,20 +1,45 @@
 import json
 import os
-from datetime import date
+from datetime import date, datetime
 
 DB_FILE = "datos_guerrero.json"
 
 def cargar_datos():
-    """Carga los datos del usuario o devuelve una estructura base por defecto."""
+    """Carga los datos y audita inactividad o cambios de mes automáticamente."""
     if os.path.exists(DB_FILE):
         try:
             with open(DB_FILE, 'r', encoding='utf-8') as f:
                 datos = json.load(f)
-                # Asegurar llaves base por si el JSON es antiguo
-                if 'fallos' not in datos:
-                    datos['fallos'] = 3
-                if 'racha' not in datos:
-                    datos['racha'] = 0
+                
+                # 1. Asegurar estructura base
+                datos.setdefault('fallos', 3)
+                datos.setdefault('racha', 0)
+                datos.setdefault('historial', {})
+                
+                # 2. El Guardián del Tiempo (Auditoría de disciplina)
+                hoy = date.today()
+                if 'ultima_actualizacion' in datos:
+                    ultima_fecha = datetime.strptime(datos['ultima_actualizacion'], "%Y-%m-%d").date()
+                    diferencia_dias = (hoy - ultima_fecha).days
+                    
+                    # A. Cambio de mes: Guardar la "foto" de cómo terminaste
+                    if hoy.month != ultima_fecha.month:
+                        nombre_mes_anterior = ultima_fecha.strftime("%Y-%m")
+                        datos['historial'][nombre_mes_anterior] = datos.get('fallos', 3)
+                    
+                    # B. Castigo por inactividad (No abrir la app)
+                    if diferencia_dias > 1:
+                        dias_perdidos = diferencia_dias - 1
+                        datos['fallos'] = min(7, datos['fallos'] + dias_perdidos)
+                        datos['racha'] = 0
+                        
+                    # Auto-guardar si hubo castigos o cambios de mes por inactividad
+                    if diferencia_dias > 0:
+                         datos['ultima_actualizacion'] = str(hoy)
+                         guardar_datos(datos)
+                else:
+                    datos['ultima_actualizacion'] = str(hoy)
+                    
                 return datos
         except:
             return {}
@@ -26,28 +51,21 @@ def guardar_datos(datos):
         json.dump(datos, f, ensure_ascii=False, indent=4)
 
 def actualizar_progreso(tareas_completadas, total_tareas=3):
-    """Aplica la recompensa por completar misiones o evalúa el estatus."""
+    """Aplica la recompensa del día actual."""
     datos = cargar_datos()
     if not datos:
         return
     
     hoy = str(date.today())
-    ultimo_registro = datos.get('ultima_actualizacion', '')
+    fallos_actuales = datos.get('fallos', 3)
+    racha_actual = datos.get('racha', 0)
 
-    # Evitamos sumar/restar múltiples veces el mismo día si ya se reportó
-    if ultimo_registro != hoy:
-        fallos_actuales = datos.get('fallos', 3)
-        racha_actual = datos.get('racha', 0)
+    if tareas_completadas == total_tareas:
+        datos['fallos'] = max(0, fallos_actuales - 1)
+        datos['racha'] = racha_actual + 1
+    else:
+        datos['fallos'] = min(7, fallos_actuales + 1)
+        datos['racha'] = 0
 
-        if tareas_completadas == total_tareas:
-            # RECOMPENSA: Si completas todo, restas un fallo (mejoras tu nivel) y sube tu racha
-            datos['fallos'] = max(0, fallos_actuales - 1)
-            datos['racha'] = racha_actual + 1
-        elif tareas_completadas < total_tareas:
-            # CASTIGOS/FALTA DE DISCIPLINA: Si dejas tareas incompletas, aumenta un fallo
-            datos['fallos'] = min(7, fallos_actuales + 1)
-            datos['racha'] = 0 # Se rompe la racha si flaqueas
-
-        datos['ultima_actualizacion'] = hoy
-        guardar_datos(datos)
-        
+    datos['ultima_actualizacion'] = hoy
+    guardar_datos(datos)
